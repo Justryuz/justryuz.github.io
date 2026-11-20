@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>justryuz :: admin</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Menu admin">
+      <ul>
+        <li><a href="index.html">home</a></li>
+        <li><a href="login.html">ssh</a></li>
+      </ul>
+      <span class="db" id="who">belum login</span>
+    </nav>
+
+    <!-- Login -->
+    <section id="login-box" class="box panel" hidden>
+      <h2>admin login</h2>
+      <form id="login-form" autocomplete="off">
+        <label>User <input id="l-user" type="text" required></label>
+        <label>Password <input id="l-pass" type="password" required autocomplete="current-password"></label>
+        <button type="submit" class="btn">Login</button>
+      </form>
+      <p class="msg" id="login-msg" role="alert"></p>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dash" hidden>
+      <div class="bar-row">
+        <button class="btn" id="new-btn" type="button">+ Post baru</button>
+        <button class="btn alt" id="import-btn" type="button" hidden>Import post dari data.js</button>
+        <button class="btn alt" id="logout-btn" type="button">Logout</button>
+        <span class="msg" id="dash-msg" role="status"></span>
+      </div>
+
+      <div class="sec-title">Semua post</div>
+      <table id="list" class="list"></table>
+
+      <!-- Editor -->
+      <div id="editor" class="box panel" hidden>
+        <h2 id="ed-title">Post baru</h2>
+        <form id="ed-form" autocomplete="off">
+          <div class="grid">
+            <label>Title <input id="f-title" required maxlength="150"></label>
+            <label>Slug <input id="f-slug" required maxlength="80" pattern="[a-z0-9]+(-[a-z0-9]+)*" title="huruf kecil, angka, tanda -"></label>
+            <label>Tarikh <input id="f-date" type="date" required></label>
+            <label>Kumpulan
+              <select id="f-group">
+                <option value="blog">latest posts</option>
+                <option value="writeups">ctf writeups</option>
+                <option value="notes">quick notes</option>
+              </select>
+            </label>
+            <label>Kategori (type) <input id="f-type" maxlength="40" placeholder="linux, web, crypto..."></label>
+            <label>Platform <input id="f-platform" maxlength="40" placeholder="ubuntu, php..."></label>
+            <label>Level (1-5) <input id="f-level" type="number" min="1" max="5" value="1" required></label>
+            <label>Tested on <input id="f-tested" maxlength="100" placeholder="Linux, Windows"></label>
+          </div>
+          <label>Ringkasan <input id="f-summary" maxlength="300"></label>
+          <label>Tags (asing dengan koma) <input id="f-tags" placeholder="ssh, fail2ban, vps"></label>
+          <label>Rujukan (pilihan) <input id="f-ref" maxlength="200"></label>
+          <label>Kandungan
+            <textarea id="f-body" rows="16" spellcheck="false"></textarea>
+          </label>
+          <p class="hint">
+            Perenggan dipisah baris kosong. Baris bermula <code># </code> jadi tajuk kecil.
+            Kod di antara baris <code>```</code> dan <code>```</code>. Teks biasa sahaja (tiada HTML).
+          </p>
+          <div class="bar-row">
+            <button class="btn" type="submit" id="save-btn">Simpan</button>
+            <button class="btn alt" type="button" id="cancel-btn">Batal</button>
+            <span class="msg" id="ed-msg" role="alert"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <footer class="foot">&copy; justryuz &middot; admin</footer>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

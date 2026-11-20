@@ -3,10 +3,16 @@ main = "worker.js"
 compatibility_date = "2025-01-01"
 
 [vars]
-ALLOWED_ORIGIN = "https://git.justryuz.my"
-USERNAME = "justryuz"
+ALLOWED_ORIGIN = "https://git.justryuz.my,http://localhost:8000"
+USERNAME = "x"
 
 # Secrets are NOT stored here. Set them with:
 #   npx wrangler secret put PASSWORD
 #   npx wrangler secret put TOKEN_SECRET
 #   npx wrangler secret put PRIVATE_MOTD
+
+# Post storage. Create once, then paste the id below:
+#   npx wrangler kv namespace create POSTS
+[[kv_namespaces]]
+binding = "POSTS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"

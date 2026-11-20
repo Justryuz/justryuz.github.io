@@ -273,13 +273,13 @@
     if (!target) return print("usage: ssh user@" + C.host, "err");
     var user = target, host = C.host;
     if (target.indexOf("@") !== -1) { user = target.split("@")[0]; host = target.split("@")[1]; }
-    if (host !== C.host) return print("ssh: Could not resolve hostname " + host, "err");
+    if (host !== C.host && C.hostAliases.indexOf(host) === -1) return print("ssh: Could not resolve hostname " + host, "err");
     state.tries = 0;
-    attempt(user);
+    attempt(user, host);
   }
 
-  function attempt(user) {
-    askPassword(user + "@" + C.host + "'s password: ", async function (pw) {
+  function attempt(user, host) {
+    askPassword(user + "@" + host + "'s password: ", async function (pw) {
       var ok = false;
       if (user === "guest") ok = (await sha256(pw)) === C.guestHash;
       else if (user === C.ownerUser) ok = await ownerLogin(pw);
@@ -299,11 +299,11 @@
       }
       state.tries++;
       if (state.tries >= 3) {
-        print(user + "@" + C.host + ": Permission denied (publickey,password).", "err");
+        print(user + "@" + host + ": Permission denied (publickey,password).", "err");
         return;
       }
       print("Permission denied, please try again.", "err");
-      attempt(user);
+      attempt(user, host);
     });
   }
 
@@ -317,7 +317,7 @@
       });
       if (r.status === 429) { print("Too many attempts. Cuba lagi nanti.", "err"); state.tries = 3; return false; }
       var j = await r.json();
-      if (r.ok && j.ok) { state.token = j.token; return true; }
+      if (r.ok && j.ok) { state.token = j.token; sessionStorage.setItem("jr_token", j.token); return true; }
     } catch (e) { print("ssh: connect to host " + C.host + " failed (network).", "err"); state.tries = 3; }
     return false;
   }
@@ -329,7 +329,7 @@
       var j = await r.json();
       if (r.ok && j.ok) print(j.motd);
     } catch (e) { /* motd is optional */ }
-    print("Taip 'help'.", "dim");
+    print("Taip 'admin' untuk urus post, atau 'help'.", "dim");
   }
 
   /* ---------- owner (private) shell ---------- */
@@ -337,7 +337,8 @@
     var t = tokenize(line);
     if (!t.length) return;
     switch (t[0]) {
-      case "help": return print("Perintah: whoami, id, uname, date, motd, clear, logout");
+      case "help": return print("Perintah: admin, whoami, id, uname, date, motd, clear, logout");
+      case "admin": print("Membuka panel admin..."); location.href = "admin.html"; return;
       case "whoami": return print(C.ownerUser);
       case "id": return print("uid=1000(" + C.ownerUser + ") gid=1000(" + C.ownerUser + ") groups=1000(" + C.ownerUser + "),27(sudo)");
       case "uname": return print("Linux git 6.1.0-justryuz x86_64 GNU/Linux");
@@ -345,7 +346,7 @@
       case "motd": return showMotd();
       case "clear": out.textContent = ""; return;
       case "exit": case "logout":
-        state.token = null; state.view = "local";
+        state.token = null; sessionStorage.removeItem("jr_token"); state.view = "local";
         return print("logout\nConnection to " + C.host + " closed.");
       default: print(t[0] + ": command not found", "err");
     }

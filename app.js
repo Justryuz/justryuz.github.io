@@ -1,6 +1,6 @@
 /* justryuz-shell :: renders post tables, live search.
    All text is inserted with textContent (no innerHTML) to avoid XSS. */
-(function () {
+window.SITE_READY.then(function () {
   "use strict";
 
   var S = window.SITE;
@@ -104,4 +104,4 @@
   function tick() { clock.textContent = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC"; }
   tick();
   setInterval(tick, 1000);
-})();
+});

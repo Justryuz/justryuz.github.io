@@ -1,5 +1,5 @@
 /* Renders one article page from data.js. Plain text only (textContent). */
-(function () {
+window.SITE_READY.then(function () {
   "use strict";
 
   var S = window.SITE;
@@ -125,4 +125,4 @@
       au.appendChild(tr);
     });
   root.appendChild(au);
-})();
+});

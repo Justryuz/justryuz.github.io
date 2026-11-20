@@ -4,12 +4,14 @@
    - The REAL password lives only in the Cloudflare Worker env (see worker/). */
 window.CONFIG = {
   host: "git.justryuz.my",
+  /* Other host names accepted by the ssh command (virtual terminal only). */
+  hostAliases: ["localhost"],
 
   /* URL of the deployed Worker, e.g. "https://auth.justryuz.my". Empty = real login disabled. */
   API_URL: "",
 
   /* Real login user (password is checked by the Worker, never here). */
-  ownerUser: "justryuz",
+  ownerUser: "x",
 
   /* Number of levels per mode. Add more levels below, then add a mode here. */
   modes: { short: 5, medium: 8 },
