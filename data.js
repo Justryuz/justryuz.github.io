@@ -11,7 +11,6 @@ window.SITE = {
   nav: [
     { label: "home", href: "index.html" },
     { label: "ssh", href: "login.html" },
-    { label: "contact", href: "mailto:me@justryuz.my", hot: true }
   ],
 
   author: { name: "justryuz", level: "5", email: "me@justryuz.my", verified: true },

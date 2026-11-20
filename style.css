@@ -195,3 +195,14 @@ table.info td.g, table.info td a { color: var(--green); }
   .post-top { grid-template-columns: 1fr; }
   table.info th { width: 90px; }
 }
+
+/* ---------- matrix header ---------- */
+.header { position: relative; overflow: hidden; }
+.header > *:not(.matrix-bg) { position: relative; z-index: 1; }
+.matrix-bg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .45; z-index: 0; }
+.logo-text {
+  display: inline-block; min-width: 8ch; text-align: left;
+  padding: 2px 14px; background: rgba(0, 0, 0, .72);
+}
+.logo-icon { background: rgba(0, 0, 0, .72); }
+.tagline, .header-row { text-shadow: 0 0 4px #000, 0 0 8px #000; }
