@@ -1,0 +1,4 @@
+# Copy to .dev.vars for `wrangler dev` (file is git-ignored). Use throwaway values.
+PASSWORD=change-me
+TOKEN_SECRET=long-random-string
+PRIVATE_MOTD=Welcome to the private shell.

@@ -174,3 +174,46 @@ tr:hover td { background: #0b4d0b; }
 @media (prefers-reduced-motion: reduce) {
   .logo-text { animation: none; }
 }
+
+/* ---------- article page (post.html) ---------- */
+.post-top { display: grid; grid-template-columns: 240px 1fr 230px; gap: 16px; align-items: start; margin: 8px 0 22px; }
+.mini { border: 1px solid var(--line); border-collapse: collapse; width: 100%; }
+.mini th, .mini td { background: #0d0d0d; border-bottom: 1px solid var(--line); padding: 4px 8px; text-align: left; font-size: 12px; }
+.mini th { color: #9a9a9a; width: 40%; }
+.ok { color: var(--green); }
+.post-mid { text-align: center; }
+.readtime { color: var(--yellow); font-size: 20px; margin: 6px 0 14px; }
+.bigbtn {
+  background: linear-gradient(#3fcb3f, #0c7a0c); color: #fff; font: bold 18px Verdana, sans-serif;
+  border: 1px solid #0a5a0a; border-radius: 6px; padding: 9px 46px; cursor: pointer;
+  text-shadow: 0 1px 2px #000;
+}
+.bigbtn:hover { filter: brightness(1.15); }
+.side-links { margin: 0; padding-left: 18px; font-weight: bold; font-size: 13px; line-height: 1.7; list-style: square; }
+.side-links li::marker { color: var(--green-dim); }
+
+.sec-title { text-align: center; color: var(--green-dim); margin: 22px 0 8px; }
+.sec-title::before { content: "[ "; }
+.sec-title::after  { content: " ]"; }
+
+table.info { width: 100%; border: 1px solid var(--line); border-collapse: collapse; margin-bottom: 8px; background: #111; }
+table.info th, table.info td { padding: 5px 10px; font-size: 12px; border: 0; vertical-align: top; text-align: left; }
+table.info th { width: 150px; color: #aaa; font-weight: bold; background: #1c1c1c; border-right: 1px solid var(--line); }
+table.info th::before { content: ""; }
+table.info td { background: #111; white-space: normal; border-top: 0; border-bottom: 0; }
+table.info tr:nth-child(even) td { background: #181818; }
+table.info tr:nth-child(even) th { background: #202020; }
+table.info td.g, table.info td a { color: var(--green); }
+.desc-body p { margin: 0 0 8px; color: #e6e6e6; }
+.desc-body h4 { margin: 12px 0 4px; color: var(--yellow); font-size: 12px; }
+.code {
+  margin: 4px 0 10px; padding: 8px 10px; background: #000; color: var(--green);
+  border: 1px solid var(--line); overflow-x: auto; font: 12px/1.45 "Courier New", monospace; white-space: pre;
+}
+.notfound { padding: 24px; text-align: center; margin: 30px 0; }
+.notfound h2 { color: var(--red); margin-top: 0; }
+
+@media (max-width: 720px) {
+  .post-top { grid-template-columns: 1fr; }
+  table.info th { width: 90px; }
+}

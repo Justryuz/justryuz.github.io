@@ -1,0 +1,12 @@
+name = "justryuz-auth"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://git.justryuz.my"
+USERNAME = "justryuz"
+
+# Secrets are NOT stored here. Set them with:
+#   npx wrangler secret put PASSWORD
+#   npx wrangler secret put TOKEN_SECRET
+#   npx wrangler secret put PRIVATE_MOTD

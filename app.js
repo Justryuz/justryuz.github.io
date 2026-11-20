@@ -13,16 +13,6 @@
     return e;
   }
 
-  /* ---------- nav ---------- */
-  var nav = document.getElementById("nav-links");
-  S.nav.forEach(function (n) {
-    var li = el("li", n.hot ? "hot" : "");
-    var a = el("a", "", n.label);
-    a.href = n.href;
-    li.appendChild(a);
-    nav.appendChild(li);
-  });
-
   /* ---------- carousel ---------- */
   var slideBox = document.getElementById("slide");
   var idx = 0;
@@ -68,7 +58,7 @@
   function buildTable(group, query) {
     var rows = group.posts.filter(function (p) {
       if (!query) return true;
-      var hay = (p.title + " " + p.type + " " + p.author + " " + p.date).toLowerCase();
+      var hay = (p.title + " " + p.type + " " + (p.platform || "") + " " + (p.tags || []).join(" ") + " " + p.date).toLowerCase();
       return hay.indexOf(query) !== -1;
     });
     if (!rows.length) return null;
@@ -91,7 +81,7 @@
 
       var d = el("td", "desc");
       var a = el("a", "", p.title);
-      a.href = p.href || "#";
+      a.href = "post.html?p=" + encodeURIComponent(p.slug);
       d.appendChild(a);
       tr.appendChild(d);
 
@@ -102,7 +92,7 @@
       lv.appendChild(difficultyBar(p.level));
       tr.appendChild(lv);
 
-      tr.appendChild(el("td", "tag", p.author));
+      tr.appendChild(el("td", "tag", "justryuz"));
       table.appendChild(tr);
     });
 
@@ -123,10 +113,11 @@
 
   var total = S.groups.reduce(function (n, g) { return n + g.posts.length; }, 0);
   document.getElementById("post-count").textContent = total;
-  render("");
-
   /* ---------- search ---------- */
   var q = document.getElementById("q");
+  var initial = new URLSearchParams(location.search).get("q") || "";
+  q.value = initial;
+  render(initial.trim().toLowerCase());
   q.addEventListener("input", function () { render(q.value.trim().toLowerCase()); });
   document.getElementById("search-form").addEventListener("submit", function (e) {
     e.preventDefault();
