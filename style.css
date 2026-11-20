@@ -27,11 +27,9 @@ a:hover { color: #fff; text-decoration: underline; }
 
 .wrap {
   max-width: 1000px;
-  margin: 0 auto;
+  margin: 10px auto;
   padding: 6px;
-  border-left: 1px solid var(--line);
-  border-right: 1px solid var(--line);
-  min-height: 100vh;
+  border: 1px solid var(--line);
 }
 
 /* ---------- top nav ---------- */
@@ -141,7 +139,7 @@ tr:hover td { background: #0b4d0b; }
 
 .empty { text-align: center; color: var(--green-dim); padding: 12px; }
 
-.foot { text-align: center; color: var(--green-dim); font-size: 10px; margin-top: 30px; padding: 10px 0; border-top: 1px solid var(--line); }
+.foot { text-align: center; color: var(--green-dim); font-size: 10px; margin-top: 30px; padding: 10px 0 4px; border-top: 1px solid var(--line); }
 
 /* ---------- mobile ---------- */
 @media (max-width: 720px) {
