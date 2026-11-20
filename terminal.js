@@ -13,6 +13,7 @@
   var titleEl = document.querySelector(".term-title");
 
   var state = {
+    user: "",            // logged-in real account
     view: "local",       // local | guest | owner
     modeName: "short",
     level: 0,
@@ -53,7 +54,7 @@
     var p;
     if (state.ask) p = state.ask.label;
     else if (state.view === "guest") p = "level" + state.level + "@git:~" + (state.cwd.length ? "/" + state.cwd.join("/") : "") + "$";
-    else if (state.view === "owner") p = C.ownerUser + "@git:~#";
+    else if (state.view === "owner") p = state.user + "@git:~#";
     else p = "visitor@local:~$";
     promptEl.textContent = p;
     input.type = state.ask ? "password" : "text";
@@ -282,8 +283,7 @@
     askPassword(user + "@" + host + "'s password: ", async function (pw) {
       var ok = false;
       if (user === "guest") ok = (await sha256(pw)) === C.guestHash;
-      else if (user === C.ownerUser) ok = await ownerLogin(pw);
-      else { await sleep(600); }
+      else ok = await ownerLogin(user, pw);
 
       if (ok) {
         state.tries = 0;
@@ -293,6 +293,7 @@
           enterLevel(0);
         } else {
           state.view = "owner";
+          state.user = user;
           await showMotd();
         }
         return;
@@ -307,13 +308,13 @@
     });
   }
 
-  async function ownerLogin(pw) {
+  async function ownerLogin(user, pw) {
     if (!C.API_URL) { print("Auth server belum dikonfigurasi (CONFIG.API_URL kosong).", "err"); state.tries = 3; return false; }
     try {
       var r = await fetch(C.API_URL + "/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user: C.ownerUser, password: pw })
+        body: JSON.stringify({ user: user, password: pw })
       });
       if (r.status === 429) { print("Too many attempts. Cuba lagi nanti.", "err"); state.tries = 3; return false; }
       var j = await r.json();
@@ -323,7 +324,7 @@
   }
 
   async function showMotd() {
-    print("Welcome, " + C.ownerUser + ".", "sys");
+    print("Welcome, " + state.user + ".", "sys");
     try {
       var r = await fetch(C.API_URL + "/motd", { headers: { Authorization: "Bearer " + state.token } });
       var j = await r.json();
@@ -339,8 +340,8 @@
     switch (t[0]) {
       case "help": return print("Perintah: admin, whoami, id, uname, date, motd, clear, logout");
       case "admin": print("Membuka panel admin..."); location.href = "admin.html"; return;
-      case "whoami": return print(C.ownerUser);
-      case "id": return print("uid=1000(" + C.ownerUser + ") gid=1000(" + C.ownerUser + ") groups=1000(" + C.ownerUser + "),27(sudo)");
+      case "whoami": return print(state.user);
+      case "id": return print("uid=1000(" + state.user + ") gid=1000(" + state.user + ") groups=1000(" + state.user + ")");
       case "uname": return print("Linux git 6.1.0-justryuz x86_64 GNU/Linux");
       case "date": return print(new Date().toString());
       case "motd": return showMotd();

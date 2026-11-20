@@ -42,27 +42,25 @@ export default {
         body = JSON.parse(text);
       } catch { return json({ ok: false, error: "bad request" }, 400); }
 
-      const user = String(body.user || "");
-      const pass = String(body.password || "");
-      const okUser = await safeEqual(user, env.USERNAME || "justryuz");
-      const okPass = await safeEqual(pass, env.PASSWORD || "");
+      const user = String(body.user || "").trim().slice(0, 40);
+      const pass = String(body.password || "").slice(0, 200);
+      const acct = await authenticate(env, user, pass);
 
-      if (!env.PASSWORD || !okUser || !okPass) {
+      if (!acct) {
         const n = (rec && rec.until > Date.now() ? rec.n : 0) + 1;
         fails.set(ip, { n, until: Date.now() + LOCK_MS });
         await new Promise((r) => setTimeout(r, 1000));   // slow down guessing
         return json({ ok: false, error: "denied" }, 401);
       }
       fails.delete(ip);
-      const token = await sign({ u: user, exp: Math.floor(Date.now() / 1000) + TOKEN_TTL }, env.TOKEN_SECRET);
-      return json({ ok: true, token });
+      const token = await sign({ u: acct.u, exp: Math.floor(Date.now() / 1000) + TOKEN_TTL }, env.TOKEN_SECRET);
+      return json({ ok: true, token, role: acct.r });
     }
 
     if (url.pathname === "/motd" && request.method === "GET") {
-      const auth = request.headers.get("Authorization") || "";
-      const payload = await verify(auth.replace(/^Bearer /, ""), env.TOKEN_SECRET);
-      if (!payload) return json({ ok: false, error: "unauthorized" }, 401);
-      return json({ ok: true, user: payload.u, motd: env.PRIVATE_MOTD || "Welcome back." });
+      const s = await getSession(env, request);
+      if (!s) return json({ ok: false, error: "unauthorized" }, 401);
+      return json({ ok: true, user: s.u, motd: env.PRIVATE_MOTD || "Welcome back." });
     }
 
     /* ---------- public: list posts ---------- */
@@ -75,12 +73,14 @@ export default {
 
     /* ---------- admin (Bearer token required) ---------- */
     if (url.pathname.startsWith("/admin/")) {
-      const auth = request.headers.get("Authorization") || "";
-      const payload = await verify(auth.replace(/^Bearer /, ""), env.TOKEN_SECRET);
-      if (!payload) return json({ ok: false, error: "unauthorized" }, 401);
       if (!env.POSTS) return json({ ok: false, error: "KV binding POSTS missing" }, 500);
+      // Role and existence are re-checked from KV on every call, so deleting a user
+      // or changing a role takes effect immediately, even with a still-valid token.
+      const me = await getSession(env, request);
+      if (!me) return json({ ok: false, error: "unauthorized" }, 401);
+      const isAdmin = me.r === "admin";
 
-      if (url.pathname === "/admin/me" && request.method === "GET") return json({ ok: true, user: payload.u });
+      if (url.pathname === "/admin/me" && request.method === "GET") return json({ ok: true, user: me.u, role: me.r, root: !!me.root });
 
       const load = async () => { const r = await env.POSTS.get("posts"); return r ? JSON.parse(r) : null; };
       const save = async (list) => {
@@ -97,6 +97,7 @@ export default {
       try {
         // One-time import of the posts bundled in data.js
         if (url.pathname === "/admin/import" && request.method === "POST") {
+          if (!isAdmin) return json({ ok: false, error: "admin sahaja" }, 403);
           if ((await load()) !== null) return json({ ok: false, error: "already initialized" }, 409);
           const body = await readBody();
           const list = [];
@@ -118,8 +119,13 @@ export default {
           const i = list.findIndex((x) => x.slug === c.post.slug);
           if (body.create && i !== -1) return json({ ok: false, error: "slug sudah wujud" }, 409);
           if (!body.create && i === -1) return json({ ok: false, error: "post tidak dijumpai" }, 404);
-          if (i === -1) list.push(c.post);
-          else { c.post.hits = list[i].hits; list[i] = c.post; }
+          if (i !== -1 && !isAdmin && list[i].author !== me.u) return json({ ok: false, error: "bukan post anda" }, 403);
+          if (i === -1) { c.post.author = me.u; list.push(c.post); }
+          else {
+            c.post.hits = list[i].hits;
+            if (list[i].author) c.post.author = list[i].author;   // author never changes on edit
+            list[i] = c.post;
+          }
           await save(list);
           return json({ ok: true, slug: c.post.slug });
         }
@@ -128,10 +134,78 @@ export default {
         const m = /^\/admin\/posts\/([a-z0-9-]{1,80})$/.exec(url.pathname);
         if (m && request.method === "DELETE") {
           const list = (await load()) || [];
-          const next = list.filter((x) => x.slug !== m[1]);
-          if (next.length === list.length) return json({ ok: false, error: "post tidak dijumpai" }, 404);
-          await save(next);
+          const target = list.find((x) => x.slug === m[1]);
+          if (!target) return json({ ok: false, error: "post tidak dijumpai" }, 404);
+          if (!isAdmin && target.author !== me.u) return json({ ok: false, error: "bukan post anda" }, 403);
+          await save(list.filter((x) => x.slug !== m[1]));
           return json({ ok: true });
+        }
+
+        /* ---------- change own password ---------- */
+        if (url.pathname === "/admin/password" && request.method === "POST") {
+          if (me.root) return json({ ok: false, error: "akaun root: guna 'wrangler secret put PASSWORD'" }, 400);
+          const body = await readBody();
+          const bad = passwordProblem(body.password);
+          if (bad) return json({ ok: false, error: bad }, 400);
+          if (!(await authenticate(env, me.u, String(body.current || "")))) return json({ ok: false, error: "password semasa salah" }, 403);
+          const users = await loadUsers(env);
+          users[me.u].salt = newSalt();
+          users[me.u].hash = await hashPw(body.password, users[me.u].salt);
+          await saveUsers(env, users);
+          return json({ ok: true });
+        }
+
+        /* ---------- user management (admin only) ---------- */
+        if (url.pathname.startsWith("/admin/users")) {
+          if (!isAdmin) return json({ ok: false, error: "admin sahaja" }, 403);
+          const root = env.USERNAME || "justryuz";
+          const users = await loadUsers(env);
+
+          if (url.pathname === "/admin/users" && request.method === "GET") {
+            const list = Object.keys(users).sort().map((n) => ({ username: n, role: users[n].role, created: users[n].created }));
+            return json({ ok: true, root, users: list });
+          }
+
+          if (url.pathname === "/admin/users" && request.method === "POST") {
+            const body = await readBody();
+            const name = String(body.username || "").trim();
+            if (!USER_RE.test(name)) return json({ ok: false, error: "username: 3-20 huruf kecil, angka atau _" }, 400);
+            if (name === root || users[name]) return json({ ok: false, error: "username sudah wujud" }, 409);
+            if (!ROLES.includes(body.role)) return json({ ok: false, error: "role tidak sah" }, 400);
+            const bad = passwordProblem(body.password);
+            if (bad) return json({ ok: false, error: bad }, 400);
+            const salt = newSalt();
+            users[name] = { role: body.role, salt, hash: await hashPw(body.password, salt), created: new Date().toISOString().slice(0, 10) };
+            await saveUsers(env, users);
+            return json({ ok: true });
+          }
+
+          const um = /^\/admin\/users\/([a-z0-9_]{3,20})$/.exec(url.pathname);
+          if (um && request.method === "PUT") {          // change role and/or reset password
+            const name = um[1];
+            if (!users[name]) return json({ ok: false, error: "user tidak dijumpai" }, 404);
+            const body = await readBody();
+            if (body.role !== undefined) {
+              if (!ROLES.includes(body.role)) return json({ ok: false, error: "role tidak sah" }, 400);
+              if (name === me.u && body.role !== users[name].role) return json({ ok: false, error: "tidak boleh tukar role sendiri" }, 400);
+              users[name].role = body.role;
+            }
+            if (body.password !== undefined) {
+              const bad = passwordProblem(body.password);
+              if (bad) return json({ ok: false, error: bad }, 400);
+              users[name].salt = newSalt();
+              users[name].hash = await hashPw(body.password, users[name].salt);
+            }
+            await saveUsers(env, users);
+            return json({ ok: true });
+          }
+          if (um && request.method === "DELETE") {
+            if (um[1] === me.u) return json({ ok: false, error: "tidak boleh padam akaun sendiri" }, 400);
+            if (!users[um[1]]) return json({ ok: false, error: "user tidak dijumpai" }, 404);
+            delete users[um[1]];
+            await saveUsers(env, users);
+            return json({ ok: true });
+          }
         }
       } catch (e) {
         return json({ ok: false, error: "bad request" }, 400);
@@ -210,4 +284,59 @@ function cleanPost(p) {
       hits: Number.isFinite(p.hits) && p.hits >= 0 ? Math.floor(p.hits) : 0,
     },
   };
+}
+/* ---------- users and roles ----------
+   Root account: env USERNAME + secret PASSWORD (always admin, cannot be deleted from the panel).
+   Other accounts live in KV key "users" as { name: { role, salt, hash, created } }.
+   Passwords are stored only as PBKDF2-SHA256 hashes (100k iterations, per-user random salt). */
+const USER_RE = /^[a-z0-9_]{3,20}$/;
+const ROLES = ["admin", "editor"];
+const DUMMY_SALT = "0000000000000000000000";   // used to keep timing similar for unknown users
+
+function passwordProblem(p) {
+  if (typeof p !== "string" || p.length < 10) return "password minimum 10 aksara";
+  if (p.length > 128) return "password terlalu panjang";
+  return "";
+}
+
+function newSalt() {
+  return b64u(crypto.getRandomValues(new Uint8Array(16)));
+}
+
+async function hashPw(password, salt) {
+  const key = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: enc.encode(salt), iterations: 100000 }, key, 256);
+  return b64u(bits);
+}
+
+async function loadUsers(env) {
+  const raw = env.POSTS ? await env.POSTS.get("users") : null;
+  return raw ? JSON.parse(raw) : {};
+}
+async function saveUsers(env, users) {
+  await env.POSTS.put("users", JSON.stringify(users));
+}
+
+/** Returns { u, r, root? } when the credentials are valid, else null. */
+async function authenticate(env, user, pass) {
+  const rootName = env.USERNAME || "justryuz";
+  const isRoot = await safeEqual(user, rootName);
+  const okRoot = await safeEqual(pass, env.PASSWORD || "");
+  if (isRoot) return env.PASSWORD && okRoot ? { u: rootName, r: "admin", root: true } : null;
+
+  if (!env.POSTS || !USER_RE.test(user)) { await hashPw(pass, DUMMY_SALT); return null; }
+  const rec = (await loadUsers(env))[user];
+  const h = await hashPw(pass, rec ? rec.salt : DUMMY_SALT);
+  if (rec && (await safeEqual(h, rec.hash))) return { u: user, r: rec.role };
+  return null;
+}
+
+/** Valid token + account still exists. Role comes from KV, never from the token. */
+async function getSession(env, request) {
+  const auth = request.headers.get("Authorization") || "";
+  const payload = await verify(auth.replace(/^Bearer /, ""), env.TOKEN_SECRET);
+  if (!payload) return null;
+  if (payload.u === (env.USERNAME || "justryuz")) return { u: payload.u, r: "admin", root: true };
+  const rec = (await loadUsers(env))[payload.u];
+  return rec ? { u: payload.u, r: rec.role } : null;
 }

@@ -117,7 +117,7 @@ window.SITE_READY.then(function () {
   root.appendChild(el("div", "sec-title", "About author"));
   var au = el("table", "info");
   var count = S.groups.reduce(function (n, g) { return n + g.posts.length; }, 0);
-  [["Author", S.author.name], ["Level", S.author.level], ["Warnings", "\u2713 0"], ["Posts", String(count)], ["Contact", S.author.email]]
+  [["Author", found.author || S.author.name], ["Level", S.author.level], ["Warnings", "\u2713 0"], ["Posts", String(count)], ["Contact", S.author.email]]
     .forEach(function (r) {
       var tr = el("tr");
       tr.appendChild(el("th", "", r[0]));

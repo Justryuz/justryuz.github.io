@@ -12,6 +12,7 @@
   var token = sessionStorage.getItem(KEY);
   var posts = [];
   var editing = null;      // slug being edited, or null when creating
+  var me = { user: "", role: "editor", root: false };
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -40,6 +41,7 @@
 
   /* ---------- auth ---------- */
   function showLogin(msg) {
+    me = { user: "", role: "editor", root: false };
     $("dash").hidden = true;
     $("login-box").hidden = false;
     $("who").textContent = "belum login";
@@ -52,11 +54,28 @@
     showLogin(msg);
   }
   async function enter() {
+    me = await api("/admin/me");
     $("login-box").hidden = true;
     $("dash").hidden = false;
-    $("who").textContent = C.ownerUser + "@admin";
+    $("who").textContent = me.user + "@" + me.role;
+    $("tab-users").hidden = me.role !== "admin";
+    $("acc-info").textContent = "User: " + me.user + "  |  Role: " + me.role +
+      (me.root ? "  |  Akaun root: tukar password guna 'wrangler secret put PASSWORD'." : "");
+    $("pw-form").hidden = me.root;
+    showTab("posts");
     await refresh();
   }
+
+  /* ---------- tabs ---------- */
+  function showTab(name) {
+    ["posts", "users", "account"].forEach(function (t) { $("pane-" + t).hidden = t !== name; });
+    document.querySelectorAll(".tab").forEach(function (b) { b.classList.toggle("on", b.dataset.tab === name); });
+    $("editor").hidden = true;
+    if (name === "users") loadUsers();
+  }
+  document.querySelectorAll(".tab").forEach(function (b) {
+    b.addEventListener("click", function () { showTab(b.dataset.tab); });
+  });
 
   $("login-form").addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -91,7 +110,7 @@
     try {
       var j = await api("/posts");
       posts = j.posts.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });
-      $("import-btn").hidden = j.initialized;
+      $("import-btn").hidden = j.initialized || me.role !== "admin";
       renderList(j.initialized);
       say("dash-msg", "");
     } catch (err) { say("dash-msg", "Gagal memuat: " + err.message, "err"); }
@@ -101,16 +120,16 @@
     var t = $("list");
     t.textContent = "";
     var head = el("tr");
-    ["Tarikh", "Title", "Kumpulan", "Level", ""].forEach(function (h) { head.appendChild(el("th", "", h)); });
+    ["Tarikh", "Title", "Author", "Kumpulan", "Level", ""].forEach(function (h) { head.appendChild(el("th", "", h)); });
     t.appendChild(head);
 
     if (!initialized) {
       var tr0 = el("tr"), td0 = el("td", "", "Belum ada data di server. Klik 'Import post dari data.js' atau buat post baru.");
-      td0.colSpan = 5; tr0.appendChild(td0); t.appendChild(tr0);
+      td0.colSpan = 6; tr0.appendChild(td0); t.appendChild(tr0);
       return;
     }
     if (!posts.length) {
-      var tr1 = el("tr"), td1 = el("td", "", "Tiada post."); td1.colSpan = 5; tr1.appendChild(td1); t.appendChild(tr1);
+      var tr1 = el("tr"), td1 = el("td", "", "Tiada post."); td1.colSpan = 6; tr1.appendChild(td1); t.appendChild(tr1);
       return;
     }
     posts.forEach(function (p) {
@@ -122,10 +141,13 @@
       a.target = "_blank"; a.rel = "noopener";
       td.appendChild(a);
       tr.appendChild(td);
+      tr.appendChild(el("td", "", p.author || "justryuz"));
       tr.appendChild(el("td", "", p.group));
       tr.appendChild(el("td", "", String(p.level)));
 
       var act = el("td", "act");
+      var mine = me.role === "admin" || p.author === me.user;   // the server enforces this too
+      if (!mine) { tr.appendChild(act); t.appendChild(tr); return; }
       var eb = el("button", "btn alt small", "Edit"); eb.type = "button";
       eb.addEventListener("click", function () { openEditor(p); });
       var db = el("button", "btn danger small", "Padam"); db.type = "button";
@@ -239,12 +261,91 @@
     btn.disabled = false;
   });
 
+  /* ---------- users (admin only) ---------- */
+  async function loadUsers() {
+    var t = $("ulist");
+    t.textContent = "";
+    try {
+      var j = await api("/admin/users");
+      var head = el("tr");
+      ["Username", "Role", "Dibuat", ""].forEach(function (h) { head.appendChild(el("th", "", h)); });
+      t.appendChild(head);
+
+      var r0 = el("tr");
+      r0.appendChild(el("td", "", j.root));
+      var rtd = el("td"); rtd.appendChild(el("span", "role", "admin (root)")); r0.appendChild(rtd);
+      r0.appendChild(el("td", "", "-"));
+      r0.appendChild(el("td", "act", "ubah melalui wrangler"));
+      t.appendChild(r0);
+
+      j.users.forEach(function (u) {
+        var tr = el("tr");
+        tr.appendChild(el("td", "", u.username));
+        var td = el("td");
+        var sel = el("select");
+        ["editor", "admin"].forEach(function (r) { var o = el("option", "", r); o.value = r; sel.appendChild(o); });
+        sel.value = u.role;
+        sel.disabled = u.username === me.user;
+        sel.addEventListener("change", function () { updateUser(u.username, { role: sel.value }, "Role dikemas kini."); });
+        td.appendChild(sel);
+        tr.appendChild(td);
+        tr.appendChild(el("td", "", u.created || "-"));
+
+        var act = el("td", "act");
+        var pb = el("button", "btn alt small", "Reset password"); pb.type = "button";
+        pb.addEventListener("click", function () {
+          var np = prompt("Password baru untuk " + u.username + " (min 10 aksara):");
+          if (np) updateUser(u.username, { password: np }, "Password " + u.username + " ditukar.");
+        });
+        act.appendChild(pb);
+        if (u.username !== me.user) {
+          var db = el("button", "btn danger small", "Padam"); db.type = "button"; db.style.marginLeft = "6px";
+          db.addEventListener("click", async function () {
+            if (!confirm("Padam user " + u.username + "?")) return;
+            try { await api("/admin/users/" + encodeURIComponent(u.username), { method: "DELETE" }); say("dash-msg", "User dipadam.", "ok"); loadUsers(); }
+            catch (err) { say("dash-msg", "Gagal: " + err.message, "err"); }
+          });
+          act.appendChild(db);
+        }
+        tr.appendChild(act);
+        t.appendChild(tr);
+      });
+    } catch (err) { say("dash-msg", "Gagal memuat user: " + err.message, "err"); }
+  }
+
+  async function updateUser(name, body, okMsg) {
+    try { await api("/admin/users/" + encodeURIComponent(name), { method: "PUT", body: body }); say("dash-msg", okMsg, "ok"); }
+    catch (err) { say("dash-msg", "Gagal: " + err.message, "err"); }
+    loadUsers();
+  }
+
+  $("u-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    try {
+      await api("/admin/users", { method: "POST", body: { username: $("u-name").value.trim(), password: $("u-pass").value, role: $("u-role").value } });
+      say("u-msg", "User dicipta.", "ok");
+      $("u-name").value = ""; $("u-pass").value = "";
+      loadUsers();
+    } catch (err) { say("u-msg", "Gagal: " + err.message, "err"); }
+  });
+
+  /* ---------- change own password ---------- */
+  $("pw-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    if ($("pw-new").value !== $("pw-new2").value) { say("pw-msg", "Password baru tidak sepadan.", "err"); return; }
+    try {
+      await api("/admin/password", { method: "POST", body: { current: $("pw-cur").value, password: $("pw-new").value } });
+      say("pw-msg", "Password ditukar.", "ok");
+      $("pw-form").reset();
+    } catch (err) { say("pw-msg", "Gagal: " + err.message, "err"); }
+  });
+
   /* ---------- start ---------- */
   if (!API) {
     showLogin("API_URL belum diisi dalam config.js. Deploy Worker dahulu (worker/README.md).");
     $("login-form").querySelector("button").disabled = true;
   } else if (token) {
-    api("/admin/me").then(enter).catch(function () { /* logout() already shown the login box */ });
+    enter().catch(function () { /* logout() already shows the login box on 401 */ });
   } else {
     $("l-user").value = C.ownerUser;
     showLogin();

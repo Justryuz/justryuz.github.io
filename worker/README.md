@@ -24,13 +24,25 @@ Also change `ALLOWED_ORIGIN` in `wrangler.toml` if your site URL differs. For lo
 2. First time only: click **Import post dari data.js** to copy the sample posts into KV. After that the site reads posts from KV, and `data.js` is only a fallback if the Worker is down.
 3. **+ Post baru** to write. Posts show on the public site within about 20 seconds.
 
+## Users and roles
+
+- **root** (`USERNAME` in `wrangler.toml` + secret `PASSWORD`): always admin, cannot be deleted from the panel. Change its password with `npx wrangler secret put PASSWORD`.
+- **admin**: manages every post and all users.
+- **editor**: creates posts, and edits or deletes only their own posts.
+- Users are created in `/admin.html` > Users. Passwords are stored as PBKDF2-SHA256 hashes (per-user salt), minimum 10 characters.
+- Role and existence are checked on every request, so deleting a user or changing a role works immediately. A changed password does not end sessions already open (tokens last 1 hour). Rotate `TOKEN_SECRET` to end all sessions.
+- Any user can also log in at the ssh terminal: `ssh <user>@localhost`.
+
 ## Endpoints
 
 | Route | Auth | Purpose |
 |---|---|---|
 | `POST /login` | none | `{user, password}` returns `{ok, token}`. 5 failed tries lock the IP for 15 min (per isolate). |
 | `GET /posts` | none | `{ok, initialized, posts}` |
-| `GET /admin/me` | token | check session |
+| `GET /admin/me` | token | `{user, role, root}` |
+| `GET/POST /admin/users` | admin | list / create `{username, password, role}` |
+| `PUT/DELETE /admin/users/:name` | admin | change role, reset password / delete |
+| `POST /admin/password` | token | change own password `{current, password}` (not for root) |
 | `PUT /admin/posts` | token | `{post, create}` create or update (slug is the ID) |
 | `DELETE /admin/posts/:slug` | token | delete |
 | `POST /admin/import` | token | one-time bulk import, refused once initialized |

@@ -39,3 +39,11 @@ table.list tr:nth-child(even) td { background: #171717; }
 table.list td.act { white-space: nowrap; text-align: right; }
 
 @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+.tabs { display: flex; gap: 4px; margin: 14px 0 6px; border-bottom: 1px solid var(--line); }
+.tab {
+  background: #0d0d0d; color: var(--green-dim); border: 1px solid var(--line); border-bottom: 0;
+  padding: 6px 16px; font: bold 12px Verdana, sans-serif; cursor: pointer;
+}
+.tab.on { background: var(--panel); color: var(--green); }
+.role { display: inline-block; padding: 0 6px; border: 1px solid var(--line); font-size: 10px; color: var(--yellow); }

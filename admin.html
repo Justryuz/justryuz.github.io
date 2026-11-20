@@ -38,7 +38,15 @@
         <span class="msg" id="dash-msg" role="status"></span>
       </div>
 
-      <div class="sec-title">Semua post</div>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab on" data-tab="posts">Posts</button>
+        <button type="button" class="tab" data-tab="users" id="tab-users" hidden>Users</button>
+        <button type="button" class="tab" data-tab="account">Akaun saya</button>
+      </div>
+
+      <!-- Tab: posts -->
+      <div id="pane-posts">
+      <div class="sec-title" id="posts-title">Semua post</div>
       <table id="list" class="list"></table>
 
       <!-- Editor -->
@@ -77,6 +85,46 @@
             <span class="msg" id="ed-msg" role="alert"></span>
           </div>
         </form>
+      </div>
+      </div><!-- /pane-posts -->
+
+      <!-- Tab: users (admin only) -->
+      <div id="pane-users" hidden>
+        <div class="sec-title">Senarai user</div>
+        <table id="ulist" class="list"></table>
+        <div class="box panel">
+          <h2>Tambah user</h2>
+          <form id="u-form" autocomplete="off">
+            <div class="grid">
+              <label>Username <input id="u-name" required maxlength="20" pattern="[a-z0-9_]{3,20}" title="3-20 huruf kecil, angka, _"></label>
+              <label>Role
+                <select id="u-role"><option value="editor">editor (post sendiri)</option><option value="admin">admin (semua)</option></select>
+              </label>
+              <label>Password (min 10) <input id="u-pass" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+            </div>
+            <div class="bar-row">
+              <button class="btn" type="submit">Cipta user</button>
+              <span class="msg" id="u-msg" role="alert"></span>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tab: my account -->
+      <div id="pane-account" hidden>
+        <div class="box panel">
+          <h2>Akaun saya</h2>
+          <p class="hint" id="acc-info"></p>
+          <form id="pw-form" autocomplete="off">
+            <label>Password semasa <input id="pw-cur" type="password" required autocomplete="current-password"></label>
+            <label>Password baru (min 10) <input id="pw-new" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+            <label>Ulang password baru <input id="pw-new2" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+            <div class="bar-row">
+              <button class="btn" type="submit" id="pw-btn">Tukar password</button>
+              <span class="msg" id="pw-msg" role="alert"></span>
+            </div>
+          </form>
+        </div>
       </div>
     </section>
 

@@ -62,7 +62,7 @@ window.SITE_READY.then(function () {
       lv.appendChild(difficultyBar(p.level));
       tr.appendChild(lv);
 
-      tr.appendChild(el("td", "tag", "justryuz"));
+      tr.appendChild(el("td", "tag", p.author || "justryuz"));
       table.appendChild(tr);
     });
 
