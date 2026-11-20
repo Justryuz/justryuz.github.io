@@ -8,7 +8,7 @@ window.CONFIG = {
   hostAliases: ["localhost"],
 
   /* URL of the deployed Worker, e.g. "https://auth.justryuz.my". Empty = real login disabled. */
-  API_URL: "",
+  API_URL: "https://justryuz-auth.fahmifisal.workers.dev",
 
   /* Real login user (password is checked by the Worker, never here). */
   ownerUser: "x",
