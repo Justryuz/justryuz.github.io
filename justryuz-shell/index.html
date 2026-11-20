@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>justryuz :: blog</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- Top navigation -->
+    <nav class="topnav" aria-label="Menu utama">
+      <ul id="nav-links"></ul>
+      <span class="db">posts: <b id="post-count">0</b></span>
+    </nav>
+
+    <!-- Header box -->
+    <header class="box header">
+      <div class="header-row">
+        <div class="contact">Contact us: <a href="mailto:me@justryuz.my">me@justryuz.my</a></div>
+        <div class="auth">
+          <span aria-hidden="true">&#128274;</span>
+          [ <a href="login.html">ssh login</a> ]
+        </div>
+      </div>
+
+      <div class="logo">
+        <div class="logo-icon" aria-hidden="true">&gt;_</div>
+        <h1 class="logo-text" data-text="justryuz">justryuz</h1>
+      </div>
+
+      <p class="tagline">
+        Blog peribadi tentang security, Linux, dan nota CTF.<br>
+        Ditulis untuk tujuan pembelajaran sahaja. Guna atas risiko sendiri. // justryuz
+      </p>
+    </header>
+
+    <!-- Carousel -->
+    <section class="carousel" aria-label="Pengumuman">
+      <button class="arrow" id="prev" aria-label="Sebelum">&#10094;</button>
+      <div class="box slide" id="slide" aria-live="polite"></div>
+      <button class="arrow" id="next" aria-label="Seterusnya">&#10095;</button>
+    </section>
+
+    <!-- Search -->
+    <form class="search" id="search-form" role="search">
+      <label for="q">Search:</label>
+      <input id="q" type="search" autocomplete="off" placeholder="tajuk, tag, author...">
+      <button type="submit">Search</button>
+      <a href="#" id="clear">Clear</a>
+    </form>
+
+    <h2 class="title">justryuz Blog &amp; Writeups Database</h2>
+
+    <main id="tables"></main>
+
+    <footer class="foot">
+      &copy; justryuz &middot; git.justryuz.my &middot; <span id="clock"></span>
+    </footer>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
