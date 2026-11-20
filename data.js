@@ -10,10 +10,6 @@
 window.SITE = {
   nav: [
     { label: "home", href: "index.html" },
-    { label: "blog", href: "index.html#blog" },
-    { label: "writeups", href: "index.html#writeups" },
-    { label: "notes", href: "index.html#notes" },
-    { label: "search", href: "index.html#q" },
     { label: "ssh", href: "login.html" },
     { label: "contact", href: "mailto:me@justryuz.my", hot: true }
   ],
