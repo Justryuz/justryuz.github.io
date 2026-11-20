@@ -20,33 +20,6 @@ window.SITE = {
 
   author: { name: "justryuz", level: "5", email: "me@justryuz.my", verified: true },
 
-  slides: [
-    {
-      title: "Selamat datang ke justryuz blog",
-      body: [
-        "Nota security, Linux dan writeup CTF dalam satu tempat.",
-        "Semua kandungan untuk tujuan pembelajaran."
-      ],
-      chips: ["linux", "ctf", "pentest", "notes"]
-    },
-    {
-      title: "Cabaran: login ke shell privat",
-      body: [
-        "Mula sebagai guest, selesaikan puzzle level demi level.",
-        "Password sebenar hanya disahkan di server, bukan di halaman ini."
-      ],
-      chips: ["ssh guest@git.justryuz.my", "password: guest"]
-    },
-    {
-      title: "Langgan nota terbaru",
-      body: [
-        "Post baru ditambah setiap minggu.",
-        "Hantar cadangan topik melalui email."
-      ],
-      chips: ["me@justryuz.my"]
-    }
-  ],
-
   groups: [
     {
       id: "blog",

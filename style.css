@@ -89,25 +89,6 @@ a:hover { color: #fff; text-decoration: underline; }
 
 .tagline { text-align: center; color: var(--yellow); font-size: 11px; margin: 0; }
 
-/* ---------- carousel ---------- */
-.carousel { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
-.arrow {
-  background: none; border: 0; color: var(--green);
-  font-size: 40px; cursor: pointer; padding: 0 6px;
-  text-shadow: 0 0 8px var(--green);
-}
-.arrow:hover { color: #fff; }
-.slide { flex: 1; padding: 12px 18px 16px; min-height: 150px; }
-.slide h3 { margin: 0 0 10px; font-size: 17px; color: var(--green); }
-.slide p, .slide li { color: var(--yellow); font-size: 11px; }
-.slide ol { margin: 0; padding-left: 18px; }
-.slide .chips { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.chip {
-  background: #fff; color: #111; font-weight: bold;
-  padding: 8px 14px; font-size: 13px; border-radius: 2px;
-}
-.chip.dark { background: #111; color: var(--green); border: 1px solid var(--green); }
-
 /* ---------- search ---------- */
 .search { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 18px 0 10px; }
 .search label { color: var(--green); font-weight: bold; }
@@ -167,7 +148,6 @@ tr:hover td { background: #0b4d0b; }
   .logo { flex-direction: column; gap: 14px; }
   .logo-text { font-size: 34px; }
   .col-hide { display: none; }
-  .arrow { font-size: 28px; }
   .search input { width: 45%; }
 }
 

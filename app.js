@@ -1,4 +1,4 @@
-/* justryuz-shell :: renders nav, carousel, post tables, live search.
+/* justryuz-shell :: renders post tables, live search.
    All text is inserted with textContent (no innerHTML) to avoid XSS. */
 (function () {
   "use strict";
@@ -12,36 +12,6 @@
     if (text !== undefined) e.textContent = text;
     return e;
   }
-
-  /* ---------- carousel ---------- */
-  var slideBox = document.getElementById("slide");
-  var idx = 0;
-  var timer;
-
-  function showSlide(i) {
-    idx = (i + S.slides.length) % S.slides.length;
-    var s = S.slides[idx];
-    slideBox.textContent = "";
-    slideBox.appendChild(el("h3", "", "> " + s.title));
-    var ol = el("ol");
-    s.body.forEach(function (line) { ol.appendChild(el("li", "", line)); });
-    slideBox.appendChild(ol);
-    var chips = el("div", "chips");
-    s.chips.forEach(function (c, n) {
-      chips.appendChild(el("span", "chip" + (n % 2 ? " dark" : ""), c));
-    });
-    slideBox.appendChild(chips);
-  }
-
-  function restart() {
-    clearInterval(timer);
-    timer = setInterval(function () { showSlide(idx + 1); }, 6000);
-  }
-
-  document.getElementById("prev").addEventListener("click", function () { showSlide(idx - 1); restart(); });
-  document.getElementById("next").addEventListener("click", function () { showSlide(idx + 1); restart(); });
-  showSlide(0);
-  restart();
 
   /* ---------- tables ---------- */
   var tables = document.getElementById("tables");
